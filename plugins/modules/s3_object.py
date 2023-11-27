@@ -654,15 +654,9 @@ def path_check(path):
         return False
 
 
-def get_content_type(src, present=True):
-    if not present:
-        content_type = None
-        if src:
-            content_type = mimetypes.guess_type(src)[0]
-        if content_type is None:
-            # s3 default content type
-            content_type = "binary/octet-stream"
-        return content_type
+def guess_content_type(src):
+    content_type = mimetypes.guess_type(src)[0] if src else None
+    return content_type if content_type else "binary/octet-stream"
 
 
 def get_extra_params(
@@ -747,7 +741,8 @@ def upload_s3file(
             elif isinstance(permissions, list):
                 extra["ACL"] = permissions[0]
 
-        extra["ContentType"] = get_content_type(src, present=extra.get("ContentType"))
+        if "ContentType" not in extra:
+            extra["ContentType"] = guess_content_type(src)
 
         if src:
             s3.upload_file(aws_retry=True, Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
